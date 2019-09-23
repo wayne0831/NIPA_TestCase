@@ -64,6 +64,9 @@ cfusion.s.xgb
 # remove the rdata history
 rm(list=ls())
 
+# load the text preprocessing functions
+source("DCS_function.R", encoding = "UTF-8")
+
 # load the best algorithm : Stak_XGB
 load("DCS_AllClasses.Rdata")
 
