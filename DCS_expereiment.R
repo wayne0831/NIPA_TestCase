@@ -10,43 +10,6 @@
 # Remove previous data
 rm(list=ls())
 
-# Packages
-pkgs <- c("caret", "dplyr", "rpart", "adabag", "randomForest", "e1071", "NbClust")
-sapply(pkgs, require, character.only=TRUE)
-
-# Functions
-source("DCS_function.R")
-
-####################################################################################################
-### Metadata data frame
-####################################################################################################
-
-# Root folder path
-root_folder  <- "./문서"
-
-# Folder list(Group by each document type)
-folder_list  <- list.files(root_folder)
-
-# train data frame
-df <- data.frame()
-for (i in 1:NROW(folder_list)){
-  folder_path <- paste0(root_folder, "/", folder_list[i], "/")
-  tmp         <- get_folder_info(folder_path)
-  df          <- rbind(df, tmp)}
-
-df$doc_id <- 1:NROW(df)
-df        <- df %>% select(doc_id, Path, Type, Name, Extension, text)
-
-####################################################################################################
-### Pre-process the text data and create the document term matrix
-####################################################################################################
-
-# Create the document term matrix
-dtm.all <- create_dtm(df)
-
-# Save the datas into Rdata fil1e
-save(list=ls(), file = "./DCS.RData")
-
 ####################################################################################################
 # setting
 ####################################################################################################
@@ -59,23 +22,14 @@ load("DCS.RData")
 df        <- dtm.all[, -1]
 
 # remove '회의록' class
-#df$Type   <- as.character(df$Type)
-#df        <- df[df$Type != '회의록', ]
-#df$Type   <- as.factor(df$Type)
+df$Type   <- as.character(df$Type)
+df        <- df[df$Type != '회의록', ]
+df$Type   <- as.factor(df$Type)
 
-set.seed(0831)
-#sample(1:10) : 7  8  1  3  6  9 10  4  2  5
-
-idx   <- createDataPartition(df$Type, p = 0.85, list = F)
+set.seed(13)
+idx   <- createDataPartition(df$Type, p = 0.8, list = F)
 train <- df[idx, ]
 test  <- df[-idx, ]
-
-##Clustering
-#df.c <- dtm.all[, c(-1, -41)]
-#res.nb <- NbClust(df.c, min.nc = 2, max.nc = 40, method = "kmeans")
-#aa <- data.frame(t = df$Type, c = as.factor(res.nb$Best.partition))
-
-#sample(1:10) : 3  4  5  7  2  8  9  6 10  1
 
 ####################################################################################################
 # train the model - 5 cross validation 
@@ -91,15 +45,13 @@ fit_Control <- trainControl(method = 'cv', number = 5)
 df$Type     <- as.factor(df$Type)
 
 # grid search
-rf_fit2      <- train(Type~., data = train, method = 'rf', ntree = 100, 
+rf_fit2      <- train(Type~., data = train, method = 'rf', ntree = 500, 
                       trControl = fit_Control, tuneGrid = expand.grid(mtry = 5:15), verbose = F)
 test.rf      <- predict(rf_fit2, newdata = test)
 cfusion.e.rf <- table(test.rf, test$Type) 
 error.e.rf   <- sum(test.rf != test$Type) / (nrow(df) - length(idx))
 
 ## XGBoost
-# base learner
-# grid search
 tune_grid     <- expand.grid(nrounds = seq(50, 100, 10), eta = seq(0.05, 0.5, 0.05),
                              max_depth = c(3:6), gamma = seq(0, 0.5, 0.05),
                              colsample_bytree = 1, min_child_weight = 1, subsample =1)
@@ -113,18 +65,6 @@ xgb_fit       <- train(x = select(train, -Type), y = train$Type, trControl = tra
 test.xgb      <- predict(xgb_fit, newdata = test)
 cfusion.e.xgb <- table(test.xgb, test$Type) 
 error.e.xgb   <- sum(test.xgb != test$Type) / (nrow(df) - length(idx)) 
-
-# # grid search
-# tune_grid     <- expand.grid(nrounds = seq(50, 200, 10), eta = seq(0.05, 1, 0.05),
-#                              max_depth = c(3:10), gamma = seq(0, 1, 0.05),
-#                              colsample_bytree = 1, min_child_weight = 1, subsample =1)
-# tune_control  <- trainControl(method = 'cv', number = 5, verboseIter = F, allowParallel = T)
-# 
-# xgb_tune      <- train(x = select(train, -Type), y = train$Type, 
-#                        trControl = tune_control, tuneGrid = tune_grid,
-#                        method = 'xgbTree', verbose = T)
-# xgb_tune
-# predict(xgb_tune, newdata = test) %>% confusionMatrix(test$Type)
 
 ## SVM
 tune.svm        <- tune.svm(Type ~ ., data = train,
@@ -211,7 +151,7 @@ error.s.bag   <- sum(test.s.bag != test$Type) / (nrow(df) - length(idx))
 
 best.res      <- 1 - min(error.e.tr, error.e.rf, error.e.xgb, error.e.svm.u, error.e.mdl, error.e.bag,
                          error.s.tr, error.s.rf, error.s.xgb, error.s.svm, error.s.mdl, error.s.bag)
-
+best.res
 test.result   <- data.frame(Type = test$Type,
                             tr_predict = predict(dt_fit, newdata = test),
                             rf_predict = predict(rf_fit2, newdata = test),
@@ -226,5 +166,60 @@ test.result   <- data.frame(Type = test$Type,
                             mdl.s_predict = predict(mdl_st, newdata = test_st),
                             bag.s_predict = predict(bag_st, newdata = test_st))
 
-best.res
+Confusion_Matrix  <- cfusion.s.xgb
+
+Acc_Table         <- t(sort(data.frame("Decision Tree" = 1 - error.e.tr,
+                                "Random Forest" = 1 - error.e.rf,
+                                "XGBoost"       = 1 - error.e.xgb,
+                                "SVM"           = 1 - error.e.svm.u,
+                                "MDL"           = 1 - error.e.mdl,
+                                "Bagging"       = 1 - error.e.bag,
+                                "Stacking_Tree" = 1 - error.s.tr,
+                                "Stacking_RF"   = 1 - error.s.rf,
+                                "Stacking_XGB"  = 1 - error.s.xgb,
+                                "Stacking_SVM"  = 1 - error.s.svm,
+                                "Stacking_MDL"  = 1 - error.s.mdl,
+                                "Stacking_Bag"  = 1 - error.s.bag), decreasing = TRUE))
+
+colnames(Acc_Table) <- "Accuracy" 
+
+
+Doc_predict <- function(folder_list = folder_list){
+  
+  # train data frame
+  df.tmp <- data.frame()
+  
+  for (i in 1:NROW(folder_list)){
+    folder_path <- paste0(root_folder, "/", folder_list[i], "/")
+    tmp         <- get_folder_info(folder_path)
+    df.tmp      <- rbind(df.tmp, tmp)}
+  
+  df.tmp$doc_id <- 1:NROW(df.tmp)
+  df.tmp        <- df.tmp %>% select(doc_id, Path, Type, Name, Extension, text)
+  
+  # Create the document term matrix and Remove the doc_id column
+  df.tmp        <- create_dtm(df.tmp)
+  df.tmp        <- df.tmp[, -1]
+  
+  # rearrange the column of df.tmp to equalize with dtm.all
+  order <- which(colnames(df.tmp) == colnames(dtm.all[,-1])[1])
+  for(i in 2:40){ order <- cbind(order, which(colnames(df.tmp) == colnames(dtm.all[,-1])[i])) }
+  
+  # set df.tmp as test data
+  test <- df.tmp[, order]
+  
+  # load the result of Stack_XGB 
+  test_st     <- data.frame(Type        = test$Type,
+                            tr_predict  = predict(dt_fit, newdata = test),
+                            rf_predict  = predict(rf_fit2, newdata = test),
+                            xgb_predict = predict(xgb_fit, newdata = test),
+                            svm_predict = predict(tuned.svm, newdata = test),
+                            mdl_predict = predict(mdl_fit, newdata = test),
+                            bag_predict = predict(bag_fit, newdata = test))
+  
+  result <- list(Prediction = predict(xgb_st, test_st),
+                 Actual     = test_st$Type)
+  
+  return(result)
+}
 
