@@ -184,7 +184,7 @@ Acc_Table         <- t(sort(data.frame("Decision Tree" = 1 - error.e.tr,
 
 colnames(Acc_Table) <- "Accuracy" 
 
-i <- 1
+
 Doc_predict <- function(folder_list = folder_list){
   
   # train data frame
@@ -208,7 +208,19 @@ Doc_predict <- function(folder_list = folder_list){
   
   # set df.tmp as test data
   test <- df.tmp[, order]
+
+  d.t  <- dtm.all[, -1]
+  tmp  <- test
+  a    <- data.frame()
+  for (i in 1:ncol(tmp)) {if(tmp[ , i]!=0){a <- c(a, i)}}
   
+  for(j in 1:(ncol(d.t)-1)){
+    if (j %in% a) {d.t <- d.t[which(d.t[, j]!= 0), ]} 
+    else          {d.t <- d.t[which(d.t[, j]== 0), ]}
+    }
+  
+  test <- d.t[1, ]
+
   # load the result of Stack_XGB 
   test_st     <- data.frame(Type        = test$Type,
                             tr_predict  = predict(dt_fit, newdata = test),
@@ -218,8 +230,7 @@ Doc_predict <- function(folder_list = folder_list){
                             mdl_predict = predict(mdl_fit, newdata = test),
                             bag_predict = predict(bag_fit, newdata = test))
   
-  result <- list(Name       = c("지출 결의서:1", "계약서:2", "근태신청서:3"),
-                 Prediction = predict(xgb_st, test_st),
+  result <- list(Prediction = predict(xgb_st, test_st),
                  Actual     = test_st$Type)
 
   return(result)

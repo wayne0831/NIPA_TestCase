@@ -157,7 +157,7 @@ word_list <- c("회의", "연차", "조퇴", "출장", "사유", "신청", "외�
 
 create_dtm <- function(df){
   tmp <- df %>% select(doc_id, text) %>% text_pre_processing %>% 
-    DocumentTermMatrix(control=list(weighting=weightTfIdf)) %>% as.matrix() %>% as.data.frame()
+    DocumentTermMatrix(control=list(weighting=weightTf)) %>% as.matrix() %>% as.data.frame()
   #weighting=weightTF
   result  <- data.frame(doc_id = rownames(tmp))
   

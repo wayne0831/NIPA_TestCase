@@ -44,8 +44,17 @@ Confusion_Matrix
 # Root folder path
 root_folder  <- "./Folder"
 
-# Folder list(Group by each document type)
-folder_list  <- list.files(root_folder)
+# Folder list (the number of input data texts is 3)
+folder_list_tmp  <- list.files(root_folder)
 
-# Document Prediction Function
+# First document prediction
+folder_list  <- folder_list_tmp[1]
+Doc_predict(folder_list)
+
+# Second document prediction
+folder_list  <- folder_list_tmp[2]
+Doc_predict(folder_list)
+
+# Last document prediction
+folder_list  <- folder_list_tmp[3]
 Doc_predict(folder_list)
