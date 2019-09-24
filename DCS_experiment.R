@@ -167,7 +167,10 @@ test.result   <- data.frame(Type = test$Type,
                             mdl.s_predict = predict(mdl_st, newdata = test_st),
                             bag.s_predict = predict(bag_st, newdata = test_st))
 
+# Assign the Stack_XGB matrix 
 Confusion_Matrix  <- cfusion.s.xgb
+rownames(Confusion_Matrix) <- c("견적서(type.1)", "계약서(type.2)", "근태서(type.3)", "기안서(type.4)", "보고서(type.5)", "지출서(type.6)", "품의서(type.7)")
+colnames(Confusion_Matrix) <- c("type.1", "type.2", "type.3", "type.4", "type.5", "type.6", "type.7")
 
 Acc_Table         <- t(sort(data.frame("Decision Tree" = 1 - error.e.tr,
                                 "Random Forest" = 1 - error.e.rf,
