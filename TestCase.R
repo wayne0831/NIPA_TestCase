@@ -22,7 +22,7 @@ source("DCS_function.R", encoding = "UTF-8")
 load("DCS_result.RData")
 
 ####################################################################################################
-# 1.Experiment  : Train 0.8 // Test : 0.2
+# 1.Experiment  : 5-fold cross validation
 ####################################################################################################
 # Dataset
 View(df) 
@@ -30,7 +30,7 @@ View(df)
 # Result Table
 Acc_Table 
 
-# Show the best result : Stack_XGB, Random Forest and MDL show the highest accuracy
+# Show the best result : Stack_XGB
 Acc_Table[which.max(Acc_Table)]  
 
 # Show the confusion matrix

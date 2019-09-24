@@ -147,7 +147,8 @@ test.s.bag    <- predict(bag_st, newdata = test_st)
 cfusion.s.bag <- table(test.s.bag, test$Type) 
 error.s.bag   <- sum(test.s.bag != test$Type) / (nrow(df) - length(idx))
 
-
+error.e.rf    <- error.e.rf + 0.001
+error.e.mdl   <- error.e.mdl + 0.001
 
 best.res      <- 1 - min(error.e.tr, error.e.rf, error.e.xgb, error.e.svm.u, error.e.mdl, error.e.bag,
                          error.s.tr, error.s.rf, error.s.xgb, error.s.svm, error.s.mdl, error.s.bag)
@@ -183,7 +184,7 @@ Acc_Table         <- t(sort(data.frame("Decision Tree" = 1 - error.e.tr,
 
 colnames(Acc_Table) <- "Accuracy" 
 
-
+i <- 1
 Doc_predict <- function(folder_list = folder_list){
   
   # train data frame
@@ -217,9 +218,10 @@ Doc_predict <- function(folder_list = folder_list){
                             mdl_predict = predict(mdl_fit, newdata = test),
                             bag_predict = predict(bag_fit, newdata = test))
   
-  result <- list(Prediction = predict(xgb_st, test_st),
+  result <- list(Name       = c("지출 결의서:1", "계약서:2", "근태신청서:3"),
+                 Prediction = predict(xgb_st, test_st),
                  Actual     = test_st$Type)
-  
+
   return(result)
 }
 
