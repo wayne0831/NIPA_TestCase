@@ -11,8 +11,10 @@
 # remove the rdata history
 rm(list=ls())
 
-# Load the packages that are needed in experiments
-pkgs <- c("caret", "dplyr", "rpart", "adabag", "randomForest", "e1071")
+# Install and Load the packages that are needed in experiments
+pkgs <- c("caret", "dplyr", "rpart", "adabag", "randomForest", "e1071", "xgboost",
+          "dplyr", "officer", "pdftools", "stringr", "openxlsx", "tm")
+
 sapply(pkgs, require, character.only = TRUE)
 
 # load the text preprocessing functions
@@ -40,7 +42,7 @@ Confusion_Matrix
 # 2.Load the text data and predict
 ####################################################################################################
 # Root folder path
-root_folder  <- "./문서"
+root_folder  <- "./Folder"
 
 # Folder list(Group by each document type)
 folder_list  <- list.files(root_folder)
