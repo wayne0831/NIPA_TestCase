@@ -177,6 +177,10 @@ create_dtm <- function(df){
   
   return (result) }
 
+
+####################################################################################################
+### Document prediction function
+####################################################################################################
 Doc_predict <- function(folder_list = folder_list){
   
   # train data frame
