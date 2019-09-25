@@ -147,9 +147,6 @@ test.s.bag    <- predict(bag_st, newdata = test_st)
 cfusion.s.bag <- table(test.s.bag, test$Type) 
 error.s.bag   <- sum(test.s.bag != test$Type) / (nrow(df) - length(idx))
 
-error.e.rf    <- error.e.rf + 0.001
-error.e.mdl   <- error.e.mdl + 0.001
-
 best.res      <- 1 - min(error.e.tr, error.e.rf, error.e.xgb, error.e.svm.u, error.e.mdl, error.e.bag,
                          error.s.tr, error.s.rf, error.s.xgb, error.s.svm, error.s.mdl, error.s.bag)
 best.res
